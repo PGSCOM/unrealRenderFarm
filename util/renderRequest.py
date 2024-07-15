@@ -4,6 +4,7 @@ Unreal render job request class for data representation and database operation
 
 import logging
 import socket
+from typing import Dict
 import uuid
 import os
 import json
@@ -14,52 +15,52 @@ LOGGER = logging.getLogger(__name__)
 
 MODULE_PATH = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.path.dirname(MODULE_PATH)
-DATABASE = os.path.join(ROOT_PATH, 'database')
+DATABASE = os.path.join(ROOT_PATH, "database")
 
 
-class RenderStatus(object):
+class RenderStatus:
     """
     Enum class to represent render job status
     """
 
-    unassigned = 'un-assigned'
-    ready_to_start = 'ready to start'
-    in_progress = 'in progress'
-    finished = 'finished'
-    errored = 'errored'
-    cancelled = 'cancelled'
-    paused = 'paused'
+    unassigned = "un-assigned"
+    ready_to_start = "ready to start"
+    in_progress = "in progress"
+    finished = "finished"
+    errored = "errored"
+    cancelled = "cancelled"
+    paused = "paused"
 
 
-class RenderRequest(object):
+class RenderRequest:
     """
     An object representing request for an Unreal render job sent from a
     machine to the request manager (renderManager.py)
     """
 
     def __init__(
-            self,
-            uid='',
-            name='',
-            owner='',
-            worker='',
-            time_created='',
-            priority=0,
-            category='',
-            tags=[],
-            status='',
-            umap_path='',
-            useq_path='',
-            uconfig_path='',
-            output_path='',
-            width=0,
-            height=0,
-            frame_rate=0,
-            format='',
-            start_frame=0,
-            end_frame=0,
-            time_estimate='',
-            progress=0
+        self,
+        uid="",
+        name="",
+        owner="",
+        worker="",
+        time_created="",
+        priority=0,
+        category="",
+        tags=[],
+        status="",
+        umap_path="",
+        useq_path="",
+        uconfig_path="",
+        output_path="",
+        width=0,
+        height=0,
+        frame_rate=0,
+        format="",
+        start_frame=0,
+        end_frame=0,
+        time_estimate="",
+        progress=0,
     ):
         """
         Initialization
@@ -90,7 +91,9 @@ class RenderRequest(object):
         self.name = name
         self.owner = owner or socket.gethostname()
         self.worker = worker
-        self.time_created = time_created or datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+        self.time_created = time_created or datetime.now().strftime(
+            "%m/%d/%Y, %H:%M:%S"
+        )
         self.priority = priority or 0
         self.category = category
         self.tags = tags
@@ -102,7 +105,7 @@ class RenderRequest(object):
         self.width = width or 1280
         self.height = height or 720
         self.frame_rate = frame_rate or 30
-        self.format = format or 'JPG'
+        self.format = format or "JPG"
         self.start_frame = start_frame or 0
         self.end_frame = end_frame or 0
         self.length = self.end_frame - self.start_frame
@@ -110,7 +113,7 @@ class RenderRequest(object):
         self.progress = progress
 
     @classmethod
-    def from_db(cls, uid):
+    def from_db(cls, uid: int):
         """
         re-create a request object from database using uid
 
@@ -119,17 +122,17 @@ class RenderRequest(object):
         :param uid: int. unique id from database
         :return: RenderRequest. request object
         """
-        request_file = os.path.join(DATABASE, '{}.json'.format(uid))
-        with open(request_file, 'r') as fp:
+        request_file = os.path.join(DATABASE, "{}.json".format(uid))
+        with open(request_file, "r") as fp:
             try:
                 request_dict = json.load(fp)
             except Exception as e:
-                LOGGER.error('Failed to load request object from db: %s', e)
+                LOGGER.error("Failed to load request object from db: %s", e)
                 return None
         return cls.from_dict(request_dict)
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d: Dict):
         """
         Create a new request object from partial dictionary/json or.
         re-create a request object from function 'to_dict'
@@ -139,27 +142,27 @@ class RenderRequest(object):
         """
         # has to assign a default value of '' or 0 for initialization
         # value to kick-in
-        uid = d.get('uid') or ''
-        name = d.get('name') or ''
-        owner = d.get('owner') or ''
-        worker = d.get('worker') or ''
-        time_created = d.get('time_created') or ''
-        priority = d.get('priority') or 0
-        category = d.get('category') or ''
-        tags = d.get('tags') or []
-        status = d.get('status') or ''
-        umap_path = d.get('umap_path') or ''
-        useq_path = d.get('useq_path') or ''
-        uconfig_path = d.get('uconfig_path') or ''
-        output_path = d.get('output_path') or ''
-        width = d.get('width') or 0
-        height = d.get('height') or 0
-        frame_rate = d.get('frame_rate') or 0
-        format = d.get('format') or ''
-        start_frame = d.get('start_frame') or 0
-        end_frame = d.get('end_frame') or 0
-        time_estimate = d.get('time_estimate') or ''
-        progress = d.get('progress') or 0
+        uid = d.get("uid") or ""
+        name = d.get("name") or ""
+        owner = d.get("owner") or ""
+        worker = d.get("worker") or ""
+        time_created = d.get("time_created") or ""
+        priority = d.get("priority") or 0
+        category = d.get("category") or ""
+        tags = d.get("tags") or []
+        status = d.get("status") or ""
+        umap_path = d.get("umap_path") or ""
+        useq_path = d.get("useq_path") or ""
+        uconfig_path = d.get("uconfig_path") or ""
+        output_path = d.get("output_path") or ""
+        width = d.get("width") or 0
+        height = d.get("height") or 0
+        frame_rate = d.get("frame_rate") or 0
+        format = d.get("format") or ""
+        start_frame = d.get("start_frame") or 0
+        end_frame = d.get("end_frame") or 0
+        time_estimate = d.get("time_estimate") or ""
+        progress = d.get("progress") or 0
 
         return cls(
             uid=uid,
@@ -182,7 +185,7 @@ class RenderRequest(object):
             start_frame=start_frame,
             end_frame=end_frame,
             time_estimate=time_estimate,
-            progress=progress
+            progress=progress,
         )
 
     def to_dict(self):
@@ -203,7 +206,7 @@ class RenderRequest(object):
         """
         remove_db(self.uid)
 
-    def update(self, progress=0, status='', time_estimate=''):
+    def update(self, progress: int = 0, status: str = "", time_estimate: str = ""):
         """
         Update current request progress in the fake database
 
@@ -223,7 +226,7 @@ class RenderRequest(object):
 
         write_db(self.__dict__)
 
-    def assign(self, worker):
+    def assign(self, worker: str):
         """
         Update current request assignment in the fake database
 
@@ -238,6 +241,7 @@ class RenderRequest(object):
 
 # region database utility
 
+
 def read_all():
     """
     Read and convert everything in the database to RenderRequest objects
@@ -246,7 +250,9 @@ def read_all():
     """
     rrequests = list()
     files = os.listdir(DATABASE)
-    uids = [os.path.splitext(os.path.basename(f))[0] for f in files if f.endswith('.json')]
+    uids = [
+        os.path.splitext(os.path.basename(f))[0] for f in files if f.endswith(".json")
+    ]
     for uid in uids:
         rrequest = RenderRequest.from_db(uid)
         rrequests.append(rrequest)
@@ -254,33 +260,34 @@ def read_all():
     return rrequests
 
 
-def remove_db(uid):
+def remove_db(uid: str):
     """
     Remove a RenderRequest object from the database
 
     :param uid: str. request uid
     """
-    os.remove(os.path.join(DATABASE, '{}.json'.format(uid)))
+    os.remove(os.path.join(DATABASE, "{}.json".format(uid)))
 
 
 def remove_all():
     """
     Clear database
     """
-    files = os.path.join(DATABASE, '*.json')
+    files = os.path.join(DATABASE, "*.json")
     for file in files:
         os.remove(file)
 
 
-def write_db(d):
+def write_db(d: Dict):
     """
     Write/overwrite a database entry
 
     :param d: dict. RenderRequest object presented as a dictionary
     """
-    uid = d['uid']
-    LOGGER.info('writing to %s', uid)
-    with open(os.path.join(DATABASE, '{}.json'.format(uid)), 'w') as fp:
+    uid = d["uid"]
+    LOGGER.info("writing to %s", uid)
+    with open(os.path.join(DATABASE, "{}.json".format(uid)), "w") as fp:
         json.dump(d, fp, indent=4)
+
 
 # endregion
