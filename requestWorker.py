@@ -39,6 +39,9 @@ def render(uid, umap_path, useq_path, uconfig_path):
     :param uconfig_path: str. Unreal path to the preset/config asset
     :return: (str. str). output and error messages
     """
+    # Update the rendering status to "in progress" at the start
+    client.update_request(uid, status=renderRequest.RenderStatus.in_progress)
+
     command = [
         UNREAL_EXE,
         UNREAL_PROJECT,
@@ -70,7 +73,15 @@ def render(uid, umap_path, useq_path, uconfig_path):
         stderr=subprocess.PIPE,
         env=env
     )
-    return proc.communicate()
+    output, error = proc.communicate()
+
+    # Update the rendering status to "finished" upon completion
+    client.update_request(uid, status=renderRequest.RenderStatus.finished)
+
+    # Log the completion of the rendering job
+    LOGGER.info("finished rendering job %s", uid)
+
+    return output, error
 
 
 if __name__ == '__main__':
