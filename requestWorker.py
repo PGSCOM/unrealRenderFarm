@@ -3,7 +3,6 @@ Client to work/process render request, which launches executor locally and
 updates status to the server
 """
 
-
 import logging
 import os
 import subprocess
@@ -11,7 +10,6 @@ import time
 
 from util import client
 from util import renderRequest
-
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
@@ -73,6 +71,18 @@ def render(uid, umap_path, useq_path, uconfig_path):
     return proc.communicate()
 
 
+def update_render_status(uid, progress=0, status='', time_estimate=''):
+    """
+    Update the render status on the server
+
+    :param uid: str. render request uid
+    :param progress: int. updated progress
+    :param status: str. updated status
+    :param time_estimate: str. updated estimate remaining time
+    """
+    client.update_request(uid, progress, status, time_estimate)
+
+
 if __name__ == '__main__':
     LOGGER.info('Starting render worker %s', WORKER_NAME)
     while True:
@@ -86,6 +96,8 @@ if __name__ == '__main__':
             LOGGER.info('rendering job %s', uid)
 
             rrequest = renderRequest.RenderRequest.from_db(uid)
+            update_render_status(uid, progress=0, status=renderRequest.RenderStatus.in_progress)
+
             output = render(
                 uid,
                 rrequest.umap_path,
@@ -99,6 +111,7 @@ if __name__ == '__main__':
             #         print(line)
 
             LOGGER.info("finished rendering job %s", uid)
+            update_render_status(uid, progress=100, status=renderRequest.RenderStatus.finished)
 
         # check assigned job every 10 sec after previous job has finished
         time.sleep(10)
