@@ -25,6 +25,18 @@ UNREAL_EXE = r'C:\Program Files\Epic Games\UE_5.5\Engine\Binaries\Win64\UnrealEd
 UNREAL_PROJECT = r"D:\Documentos publicos\Unreal Projects\MeerkatDemo\MeerkatDemo.uproject"
 
 
+def send_status_update(uid, progress, time_estimate, status):
+    """
+    Send HTTP request to update the status of the render job
+
+    :param uid: str. render request uid
+    :param progress: int. render progress percentage
+    :param time_estimate: str. estimated time remaining
+    :param status: str. render status
+    """
+    client.update_request(uid, progress, status, time_estimate)
+
+
 def render(uid, umap_path, useq_path, uconfig_path):
     """
     Render a job locally using the custom executor (myExecutor.py)
@@ -71,6 +83,15 @@ def render(uid, umap_path, useq_path, uconfig_path):
         stderr=subprocess.PIPE,
         env=env
     )
+
+    start_time = time.time()
+    while proc.poll() is None:
+        elapsed_time = time.time() - start_time
+        progress = min(100, int((elapsed_time / 60) * 100))  # Simulate progress
+        time_estimate = '{}s'.format(int(60 - elapsed_time))  # Simulate time estimate
+        send_status_update(uid, progress, time_estimate, renderRequest.RenderStatus.in_progress)
+        time.sleep(5)  # Update every 5 seconds
+
     stdout, stderr = proc.communicate()
     return proc.returncode, stdout, stderr  # Retornar el código de retorno y las salidas
 
