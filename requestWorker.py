@@ -10,6 +10,7 @@ import time
 
 from util import client
 from util import renderRequest
+import requests
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
@@ -80,7 +81,10 @@ def update_render_status(uid, progress=0, status='', time_estimate=''):
     :param status: str. updated status
     :param time_estimate: str. updated estimate remaining time
     """
-    client.update_request(uid, progress, status, time_estimate)
+    try:
+        client.update_request(uid, progress, status, time_estimate)
+    except requests.exceptions.JSONDecodeError as e:
+        LOGGER.error('Failed to decode JSON response: %s', e)
 
 
 if __name__ == '__main__':
