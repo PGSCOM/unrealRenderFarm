@@ -2,5 +2,7 @@
     "workerName": "RENDER_MACHINE_01",
     "unrealExe": "C:\\Program Files\\Epic Games\\UE_5.5\\Engine\\Binaries\\Win64\\UnrealEditor.exe",
     "unrealProject": "D:\\Documentos publicos\\Unreal Projects\\MeerkatDemo\\MeerkatDemo.uproject",
-    "serverUrl": "http://127.0.0.1:5000"
+    "serverUrl": "http://127.0.0.1:5000",
+    "ffmpegPath": "ffmpeg",
+    "motioneyeServerIp": "https://selfhost.pgscom.es:10443"
 }

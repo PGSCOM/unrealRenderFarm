@@ -27,26 +27,31 @@ with open(os.path.join(MODULE_PATH, 'config.json'), 'r') as f:
 WORKER_NAME = config["workerName"]
 UNREAL_EXE = config["unrealExe"]
 UNREAL_PROJECT = config["unrealProject"]
+
 FFMPEG_PATH = config["ffmpegPath"]
-MOTIONEYE_SERVER_IP = config["motioneyeServerIp"]
+MOTIONEYE_SERVER_IP = config["ScryptedServerIp"]
 
 client.SERVER_URL = config["serverUrl"]
 client.SERVER_API_URL = client.SERVER_URL + '/api'
 
 def send_video_preview():
     """
-    Captura la ventana de previsualización y envía el video al servidor de motioneye.
+    Captura la ventana de previsualización y envía el video al servidor de motioneye usando SRT.
     """
+    srt_url = f'srt://{MOTIONEYE_SERVER_IP}:2000?streamid=mystream&mode=caller&latency=100'
     command = [
         FFMPEG_PATH,
         '-f', 'gdigrab',
-        '-i', 'desktop',  # Ajustar según la ventana específica si es necesario
+        '-i', 'desktop',  # Adjust according to the specific window if necessary
         '-vcodec', 'libx264',
         '-preset', 'ultrafast',
-        '-f', 'mpegts',
-        f'udp://{MOTIONEYE_SERVER_IP}'
+        '-f', 'srt',
+        srt_url
     ]
-    subprocess.Popen(command)
+    try:
+        subprocess.Popen(command)
+    except Exception as e:
+        print(f"Error sending video preview: {e}")
 
 def render(uid, umap_path, useq_path, uconfig_path):
     """
