@@ -5,14 +5,26 @@ Client request utility functions
 
 import logging
 import requests
+import json
+import os
 
 from . import renderRequestworker
 
 
 LOGGER = logging.getLogger(__name__)
 
-SERVER_URL = 'http://127.0.0.1:5000'
+with open(os.path.join(os.path.dirname(__file__), '..', 'config.json'), 'r') as f:
+    config = json.load(f)
+
+SERVER_URL = config.get('serverUrl', 'http://localhost:5000')
 SERVER_API_URL = SERVER_URL + '/api'
+
+# Coger la contraseña de cloudflarepassword.json desde el valor "password", si no exsiste dejar la variable vacía
+try:
+    with open(os.path.join(os.path.dirname(__file__), '..', 'cloudflarepassword.json'), 'r') as f:
+        password = json.load(f)['password']
+except FileNotFoundError:
+    password = ''
 
 
 def get_all_requests():
@@ -22,7 +34,7 @@ def get_all_requests():
     :return: [renderRequest.RenderRequest]. request objects
     """
     try:
-        response = requests.get(SERVER_API_URL+'/get')
+        response = requests.get(SERVER_API_URL+'/get', params={'password': password})
         LOGGER.debug('GET all requests response: %s', response.text)
     except requests.exceptions.ConnectionError:
         LOGGER.error('failed to connect to server %s', SERVER_API_URL)
@@ -45,7 +57,7 @@ def get_request(uid):
     :return: renderRequest.RenderRequest. request object
     """
     try:
-        response = requests.get(SERVER_API_URL+'/get/{}'.format(uid))
+        response = requests.get(SERVER_API_URL+'/get/{}'.format(uid), params={'password': password})
     except requests.exceptions.ConnectionError:
         LOGGER.error('failed to connect to server %s', SERVER_API_URL)
         return
@@ -61,7 +73,7 @@ def add_request(d):
     :return: renderRequest.RenderRequest. request object created
     """
     try:
-        response = requests.post(SERVER_API_URL+'/post', json=d)
+        response = requests.post(SERVER_API_URL+'/post', json=d, params={'password': password})
         LOGGER.debug('POST add request response: %s', response.text)
     except requests.exceptions.ConnectionError:
         LOGGER.error('failed to connect to server %s', SERVER_API_URL)
@@ -82,7 +94,7 @@ def remove_request(uid):
     :return: renderRequest.RenderRequest. request object created
     """
     try:
-        response = requests.delete(SERVER_API_URL+'/delete/{}'.format(uid))
+        response = requests.delete(SERVER_API_URL+'/delete/{}'.format(uid), params={'password': password})
     except requests.exceptions.ConnectionError:
         LOGGER.error('failed to connect to server %s', SERVER_API_URL)
         return
@@ -104,7 +116,7 @@ def update_request(uid, progress=0, status='', time_estimate=''):
         response = requests.put(
             SERVER_API_URL+'/put/{}'.format(uid),
             data='{};{};{}'.format(progress, time_estimate, status),
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'}, params={'password': password}
         )
         LOGGER.debug('PUT update request response: %s', response.text)
     except requests.exceptions.ConnectionError:

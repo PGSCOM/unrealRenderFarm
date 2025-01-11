@@ -13,7 +13,14 @@ import os
 with open(os.path.join(os.path.dirname(__file__), '..', 'config.json'), 'r') as f:
     config = json.load(f)
 
-DATABASE_url = config.get('serverUrl', 'http://localhost:5000/api/')
+# Coger la contraseña de cloudflarepassword.json desde el valor "password", si no exsiste dejar la variable vacía
+try:
+    with open(os.path.join(os.path.dirname(__file__), '..', 'cloudflarepassword.json'), 'r') as f:
+        password = json.load(f)['password']
+except FileNotFoundError:
+    password = ''
+
+DATABASE_url = config.get('serverUrl', 'http://localhost:5000') + '/api/'
 
 
 LOGGER = logging.getLogger(__name__)
@@ -67,7 +74,8 @@ class RenderRequest(object):
             start_frame=0,
             end_frame=0,
             time_estimate='',
-            progress=0
+            progress=0,
+            datapswd=None
     ):
         """
         Initialization
@@ -93,6 +101,8 @@ class RenderRequest(object):
         :param end_frame: int. custom render end frame
         :param time_estimate: str. render time remaining estimate
         :param progress: int. render progress [0 to 100]
+        :param description: str. job description
+        :param datapswd: str. password for the job
         """
         self.uid = uid or str(uuid.uuid4())[:4]
         self.name = name
@@ -116,6 +126,7 @@ class RenderRequest(object):
         self.length = self.end_frame - self.start_frame
         self.time_estimate = time_estimate
         self.progress = progress
+        self.datapswd = datapswd
 
     @classmethod
     def from_db(cls, uid):
@@ -128,10 +139,10 @@ class RenderRequest(object):
         :return: RenderRequest. request object
         """
         #request_file = os.path.join(DATABASE, '{}.json'.format(uid))
-        request_fileurl = DATABASE_url + 'get/' + uid
+        request_fileurl = DATABASE_url + '/get/' + uid
     
         try:
-            response = requests.get(request_fileurl)
+            response = requests.get(request_fileurl, params={'password': password})
             response.raise_for_status()
             request_dict = response.json()
         except Exception as e:
@@ -171,6 +182,7 @@ class RenderRequest(object):
         end_frame = d.get('end_frame') or 0
         time_estimate = d.get('time_estimate') or ''
         progress = d.get('progress') or 0
+        datapswd = d.get('datapswd') or None
 
         return cls(
             uid=uid,
@@ -193,7 +205,8 @@ class RenderRequest(object):
             start_frame=start_frame,
             end_frame=end_frame,
             time_estimate=time_estimate,
-            progress=progress
+            progress=progress,
+            datapswd=datapswd
         )
 
     def to_dict(self):
@@ -217,13 +230,6 @@ class RenderRequest(object):
     def update(self, progress=0, status='', time_estimate=''):
         """
         Update current request progress in the fake database
-
-        used by the render worker (renderWorker.py)
-        there are fields we can restrict for updating
-
-        :param progress: int. new progress
-        :param status: RenderRequest. new render status
-        :param time_estimate: str. new time remaining estimate
         """
         if progress:
             self.progress = progress
@@ -235,7 +241,7 @@ class RenderRequest(object):
         LOGGER.debug('Updating RenderRequest UID: %s with progress=%d, status=%s, time_estimate=%s',
                      self.uid, self.progress, self.status, self.time_estimate)
         
-        write_db(self.__dict__)
+        update_db(self.uid, self.__dict__)
 
 
 # region database utility
@@ -246,7 +252,7 @@ def read_all():
     via API
     """
     get_url = DATABASE_url + 'get'
-    response = requests.get(get_url)
+    response = requests.get(get_url, params={'password': password})
     if response.status_code != 200:
         raise Exception(f"Failed to read from DB: {response.text}")
 
@@ -266,7 +272,7 @@ def remove_db(uid):
     :param uid: str. request uid
     """
     delete_url = f"{DATABASE_url}delete/{uid}"
-    response = requests.delete(delete_url)
+    response = requests.delete(delete_url, params={'password': password})
     if response.status_code != 200:
         raise Exception(f"Delete failed for UID {uid}: {response.text}")
 
@@ -276,7 +282,7 @@ def remove_all():
     Clear database via API request
     """
     delete_url = f"{DATABASE_url}delete/all"
-    response = requests.delete(delete_url)
+    response = requests.delete(delete_url, params={'password': password})
     if response.status_code != 200:
         raise Exception(f"Delete all failed: {response.text}")
 
@@ -288,8 +294,21 @@ def write_db(d):
     uid = d['uid']
     LOGGER.info('writing to %s', uid)
     post_url = DATABASE_url + 'post'
-    response = requests.post(post_url, json=d)
+    response = requests.post(post_url, json=d, params={'password': password})
     if response.status_code != 200:
         raise Exception(f"Write failed for UID {uid}: {response.text}")
+
+
+def update_db(uid, d):
+    """
+    Update a database entry via HTTP PUT request
+    """
+    LOGGER.info('Updating RenderRequest %s', uid)
+    put_url = f"{DATABASE_url}put/{uid}"
+    payload = f"{d['progress']};{d['time_estimate']};{d['status']}"
+    headers = {'Content-Type': 'text/plain'}
+    response = requests.put(put_url, data=payload, headers=headers, params={'password': password})
+    if response.status_code != 200:
+        raise Exception(f"Update failed for UID {uid}: {response.text}")
 
 # endregion

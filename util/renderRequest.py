@@ -59,7 +59,8 @@ class RenderRequest(object):
             start_frame=0,
             end_frame=0,
             time_estimate='',
-            progress=0
+            progress=0,
+            datapswd=None
     ):
         """
         Initialization
@@ -85,6 +86,8 @@ class RenderRequest(object):
         :param end_frame: int. custom render end frame
         :param time_estimate: str. render time remaining estimate
         :param progress: int. render progress [0 to 100]
+        :param description: str. job description
+        :param datapswd: str. password for the job
         """
         self.uid = uid or str(uuid.uuid4())[:4]
         self.name = name
@@ -108,6 +111,7 @@ class RenderRequest(object):
         self.length = self.end_frame - self.start_frame
         self.time_estimate = time_estimate
         self.progress = progress
+        self.datapswd = datapswd
 
     @classmethod
     def from_db(cls, uid):
@@ -160,6 +164,7 @@ class RenderRequest(object):
         end_frame = d.get('end_frame') or 0
         time_estimate = d.get('time_estimate') or ''
         progress = d.get('progress') or 0
+        datapswd = d.get('datapswd') or None
 
         return cls(
             uid=uid,
@@ -182,7 +187,8 @@ class RenderRequest(object):
             start_frame=start_frame,
             end_frame=end_frame,
             time_estimate=time_estimate,
-            progress=progress
+            progress=progress,
+            datapswd=datapswd
         )
 
     def to_dict(self):
