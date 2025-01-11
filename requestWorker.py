@@ -27,9 +27,26 @@ with open(os.path.join(MODULE_PATH, 'config.json'), 'r') as f:
 WORKER_NAME = config["workerName"]
 UNREAL_EXE = config["unrealExe"]
 UNREAL_PROJECT = config["unrealProject"]
+FFMPEG_PATH = config["ffmpegPath"]
+MOTIONEYE_SERVER_IP = config["motioneyeServerIp"]
 
 client.SERVER_URL = config["serverUrl"]
 client.SERVER_API_URL = client.SERVER_URL + '/api'
+
+def send_video_preview():
+    """
+    Captura la ventana de previsualización y envía el video al servidor de motioneye.
+    """
+    command = [
+        FFMPEG_PATH,
+        '-f', 'gdigrab',
+        '-i', 'desktop',  # Ajustar según la ventana específica si es necesario
+        '-vcodec', 'libx264',
+        '-preset', 'ultrafast',
+        '-f', 'mpegts',
+        f'udp://{MOTIONEYE_SERVER_IP}'
+    ]
+    subprocess.Popen(command)
 
 def render(uid, umap_path, useq_path, uconfig_path):
     """
@@ -83,6 +100,9 @@ def render(uid, umap_path, useq_path, uconfig_path):
 
 if __name__ == '__main__':
     LOGGER.info('Starting render worker %s', WORKER_NAME)
+    
+    send_video_preview()  # Iniciar el envío de la previsualización
+    
     while True:
         rrequests = client.get_all_requests()
         LOGGER.info('Retrieved %d render requests', len(rrequests))
